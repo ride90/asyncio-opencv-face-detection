@@ -43,7 +43,8 @@ class VideoCamera:
                 break
         cv.destroyAllWindows()
 
-    def _detect_faces(self, frame):
+    @staticmethod
+    def detect_faces(frame):
         frame = cv.resize(frame, None, fx=ds_factor, fy=ds_factor, interpolation=cv.INTER_AREA)
         gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
@@ -60,6 +61,7 @@ class VideoCamera:
 
 
 if __name__ == '__main__':
+    # just to test a face detection directly without web stuff
     vc = VideoCamera()
     vc.show_frames()
     del vc

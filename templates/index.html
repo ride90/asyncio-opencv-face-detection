@@ -4,11 +4,31 @@
 </head>
 <body>
 <div>
-  <video id="player_client" width="640" height="480" autoplay></video>
-  <video id="player_server" width="640" height="480" autoplay></video>
-  <canvas id="canvas_player"></canvas>
+  <video id="video" width="640" height="480" autoplay></video>
+  <canvas id="canvas" style="display: none"></canvas>
+  <img id="target" style="display: inline;" width="640" height="480"/>
 </div>
 <script>
+    function dataURItoBlob(dataURI) {
+        // convert base64/URLEncoded data component to raw binary data held in a string
+        var byteString;
+        if (dataURI.split(',')[0].indexOf('base64') >= 0)
+            byteString = atob(dataURI.split(',')[1]);
+        else
+            byteString = unescape(dataURI.split(',')[1]);
+
+        // separate out the mime component
+        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+        // write the bytes of the string to a typed array
+        var ia = new Uint8Array(byteString.length);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+
+        return new Blob([ia], {type: mimeString});
+    }
+
     window.URL = window.URL || window.webkitURL;
     window.MediaSource = window.MediaSource || window.WebKitMediaSource;
     if (!!!window.MediaSource) {
@@ -18,62 +38,74 @@
     const codec = 'video/webm; codecs="vp8'
     let ws = null;
     let sourceBuffer = null;
-    let videoClient = document.getElementById("player_client");
-    let videoServer = document.getElementById("player_server");
-    let mSource = new window.MediaSource();
+    const video = document.querySelector('video');
+    const canvas = window.canvas = document.querySelector('canvas');
+    const target = document.getElementById('target')
+    canvas.width = 640;
+    canvas.height = 480;
+
+    var handleStream = function (stream) {
+        window.stream = stream;
+        video.srcObject = stream;
+    };
+
+    navigator.mediaDevices
+        .getUserMedia({
+            audio: false,
+            video: {
+                width: 640,
+                height: 480
+            }
+        })
+        .then(handleStream)
+
+    // update canvas every X ms
+    setInterval(
+        function () {
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            if (ws.readyState === WebSocket.OPEN) {
+                let data = canvas.toDataURL('image/jpeg', 1.0);
+                let blob = dataURItoBlob(data);
+                ws.send(blob)
+            }
+        }, 125
+    );
 
     function connectWebSocket() {
         ws = new WebSocket("wss://0.0.0.0:8088/ws");
         ws.binaryType = 'arraybuffer';
         ws.onopen = function () {
             console.log("Openened connection to websocket");
-            navigator.mediaDevices
-                .getUserMedia({
-                    audio: false, video: {
-                        width: 640,
-                        height: 480
-                    }
-                })
-                .then(handleStream)
         }
         ws.onclose = function (e) {
             console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
             setTimeout(function () {
                 connectWebSocket();
-            }, 1000);
+            }, 5000);
         };
         ws.onerror = function (err) {
             console.error('Socket encountered error: ', err.message, 'Closing socket');
             ws.close();
         };
         ws.onmessage = function (e) {
-            // console.log('Got binary')
-            if (!sourceBuffer.updating) {
-                // add bytes to buffer
-                sourceBuffer.appendBuffer(e.data);
-            }
+            console.log('Got WS MSG')
+
+            let url = window.URL.createObjectURL(
+                new Blob([e.data], {type: "image/jpeg"})
+            )
+
+            target.onload = function () {
+                window.URL.revokeObjectURL(url);
+            };
+            target.src = url;
+
         };
     }
 
-    var handleStream = function (stream) {
-        videoClient.srcObject = stream;
-        // this is the only way to get a binary
-        const recorder = new MediaRecorder(stream);
-        recorder.ondataavailable = event => {
-            const blob = event.data;
-            ws.send(blob);
-        };
-        recorder.start(50);
-    };
-
-    videoServer.src = window.URL.createObjectURL(mSource);
-    mSource.addEventListener('sourceopen', function (e) {
-        console.log('MediaSource sourceopen')
-        // buffer for video media source
-        sourceBuffer = mSource.addSourceBuffer(codec);
-    });
-    // party begins here
     connectWebSocket()
+
+
 </script>
 </body>
 </html>
