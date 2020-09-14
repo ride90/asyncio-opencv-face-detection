@@ -1,16 +1,11 @@
-import io
 import ssl
 import cv2 as cv
 import numpy as np
-from uuid import uuid4
 
-import filetype
 import aiohttp
-import aiofiles
 from aiohttp import web
 import jinja2
 import aiohttp_jinja2
-from PIL import Image
 
 from camera import VideoCamera
 
@@ -39,14 +34,16 @@ async def ws_handler(request):
     # wait for messages
     async for msg in ws:
         if msg.type == aiohttp.WSMsgType.BINARY:
+            # convert image binary to numpy array
             np_arr = np.frombuffer(msg.data, dtype=np.uint8)
+            # convert np array to np img (matrix)
             np_img = cv.imdecode(np_arr, cv.IMREAD_COLOR)
+            # detect faces
             np_img = VideoCamera.detect_faces(np_img)
-
+            # encode img back to byte
             is_success, im_buf_arr = cv.imencode(".jpg", np_img)
             byte_im = im_buf_arr.tobytes()
-
-
+            # send to client
             await ws.send_bytes(byte_im)
         elif msg.type == aiohttp.WSMsgType.ERROR:
             print(f'[WS] Connection closed with exception {ws.exception()}')

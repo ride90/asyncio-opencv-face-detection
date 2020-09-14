@@ -1,6 +1,7 @@
 import sys
 import cv2 as cv
 
+
 # defining face detector
 face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_eye.xml')
@@ -24,7 +25,7 @@ class VideoCamera:
             print('Can not retrieve a frame. Exit.')
             sys.exit()
         if detect_faces:
-            frame = self._detect_faces(frame)
+            frame = self.detect_faces(frame)
         colour = cv.cvtColor(frame, cv.COLOR_BGR2BGRA)
 
         return colour
