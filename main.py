@@ -1,3 +1,4 @@
+import os
 import ssl
 import cv2 as cv
 import numpy as np
@@ -11,9 +12,11 @@ from camera import VideoCamera
 
 
 # settings
-DEBUG = True
-PORT = 8088
-FAKE_SSL = True
+DEBUG = os.environ.get('DEBUG', True)
+PORT = int(os.environ.get('PORT', 8088))
+SSL = os.environ.get('SSL', True)
+SSL_CRT_PATH = os.environ.get('SSL_CRT_PATH', 'certificate/sslcert.crt')
+SSL_KEY_PATH = os.environ.get('SSL_KEY_PATH', 'certificate/sslcert.key')
 JINJA2_TEMPLATES_DIR = 'templates'
 
 routes = web.RouteTableDef()
@@ -61,8 +64,8 @@ aiohttp_jinja2.setup(
 )
 
 if __name__ == '__main__':
-    if FAKE_SSL:
+    if SSL:
         ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         ssl_context.check_hostname = False
-        ssl_context.load_cert_chain('certificate/sslcert.crt', 'certificate/sslcert.key')
+        ssl_context.load_cert_chain(SSL_CRT_PATH, SSL_KEY_PATH)
     web.run_app(app, port=PORT, ssl_context=ssl_context)
