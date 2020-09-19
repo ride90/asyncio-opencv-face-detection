@@ -2,6 +2,7 @@ import os
 import ssl
 import cv2 as cv
 import numpy as np
+from distutils.util import strtobool
 
 import aiohttp
 from aiohttp import web
@@ -12,9 +13,9 @@ from camera import VideoCamera
 
 
 # settings
-DEBUG = os.environ.get('DEBUG', True)
+DEBUG = strtobool(os.environ.get('DEBUG', 'True'))
 PORT = int(os.environ.get('PORT', 8088))
-SSL = os.environ.get('SSL', True)
+SSL = strtobool(os.environ.get('SSL', 'True'))
 SSL_CRT_PATH = os.environ.get('SSL_CRT_PATH', 'certificate/sslcert.crt')
 SSL_KEY_PATH = os.environ.get('SSL_KEY_PATH', 'certificate/sslcert.key')
 JINJA2_TEMPLATES_DIR = 'templates'
