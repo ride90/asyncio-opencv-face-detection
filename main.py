@@ -68,4 +68,6 @@ if __name__ == '__main__':
         ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         ssl_context.check_hostname = False
         ssl_context.load_cert_chain(SSL_CRT_PATH, SSL_KEY_PATH)
-    web.run_app(app, port=PORT, ssl_context=ssl_context)
+        web.run_app(app, port=PORT, ssl_context=ssl_context)
+    else:
+        web.run_app(app, port=PORT)
