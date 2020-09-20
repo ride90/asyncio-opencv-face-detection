@@ -1,109 +1,134 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="Oleg Pshenichniy">
+  <meta name="description" content="Oleg Pshenichnit developer's home page">
+  <title>Oleg Pshenichniy | ridelink.io</title>
+  <link rel="icon" href="https://ridelink.io/src/icon.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css">
+  <link rel="stylesheet" href="https://ridelink.io/src/milligram/milligram.min.css">
+  <link rel="stylesheet" href="https://ridelink.io/src/milligram/main.css">
+  <link rel="stylesheet" href="https://ridelink.io/src/milligram/olive.css">
 </head>
 <body>
-<div>
-  <video id="video" width="640" height="480" autoplay></video>
-  <canvas id="canvas" style="display: none"></canvas>
-  <img id="target" style="display: inline;" width="640" height="480"/>
-</div>
-<script>
-    window.URL = window.URL || window.webkitURL;
-    window.MediaSource = window.MediaSource || window.WebKitMediaSource;
-    if (!!!window.MediaSource) {
-        alert('MediaSource API is not available. Try another browser.');
-    }
+<main class="wrapper">
+  <nav class="navigation">
+    <section class="container">
+      <h1 class="title"><a href="https://ridelink.io">ridelink.io</a></h1>
+    </section>
+  </nav>
+  <div class="container">
+    <div class="row">
+      <div class="column">
+        <h4>From webcamera</h4>
+        <video id="video" style="width: inherit" autoplay></video>
+      </div>
+      <div class="column">
+        <canvas id="canvas" style="display: none"></canvas>
+        <h4>From server</h4>
+        <img id="target" style="display: inline; width: inherit;"/>
+      </div>
+    </div>
+  </div>
+  <script>
+      window.URL = window.URL || window.webkitURL;
+      window.MediaSource = window.MediaSource || window.WebKitMediaSource;
+      if (!!!window.MediaSource) {
+          alert('MediaSource API is not available. Try another browser.');
+      }
 
-    let ws = null;
-    const WS_URL = "{{WS_URL}}"
-    const video = document.getElementById('video');
-    const target = document.getElementById('target')
-    const canvas = document.getElementById('canvas');
-    canvas.width = 640;
-    canvas.height = 480;
+      let ws = null;
+      const WS_URL = "{{WS_URL}}"
+      const video = document.getElementById('video');
+      const target = document.getElementById('target')
+      const canvas = document.getElementById('canvas');
+      canvas.width = 640;
+      canvas.height = 480;
 
-    // access webcam, get media and handle media stream
-    navigator.mediaDevices
-        .getUserMedia({
-            audio: false,
-            video: {
-                width: 640,
-                height: 480
-            }
-        })
-        .then((stream) => {
-            window.stream = stream;
-            video.srcObject = stream;
-        })
+      // access webcam, get media and handle media stream
+      navigator.mediaDevices
+          .getUserMedia({
+              audio: false,
+              video: {
+                  width: 640,
+                  height: 480
+              }
+          })
+          .then((stream) => {
+              window.stream = stream;
+              video.srcObject = stream;
+          })
 
-    // update canvas every X ms
-    setInterval(
-        function () {
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      // update canvas every X ms
+      setInterval(
+          function () {
+              canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // when WS is connected  send canvas as image to the server
-            if (ws.readyState === WebSocket.OPEN) {
-                let data = canvas.toDataURL('image/jpeg', 1.0);
-                //
-                let blob = dataURItoBlob(data);
-                ws.send(blob)
-            }
-        }, 125
-    );
+              // when WS is connected  send canvas as image to the server
+              if (ws.readyState === WebSocket.OPEN) {
+                  let data = canvas.toDataURL('image/jpeg', 1.0);
+                  //
+                  let blob = dataURItoBlob(data);
+                  ws.send(blob)
+              }
+          }, 125
+      );
 
-    // connect to ws
-    connectWebSocket();
+      // connect to ws
+      connectWebSocket();
 
-    function connectWebSocket() {
-        ws = new WebSocket(WS_URL);
-        ws.binaryType = 'arraybuffer';
-        ws.onopen = function () {
-            console.log("Openened connection to websocket");
-        }
-        ws.onclose = function (e) {
-            console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
-            setTimeout(function () {
-                connectWebSocket();
-            }, 5000);
-        };
-        ws.onerror = function (err) {
-            console.error('Socket encountered error: ', err.message, 'Closing socket');
-            ws.close();
-        };
-        ws.onmessage = function (e) {
-            console.log('Got WS MSG')
+      function connectWebSocket() {
+          ws = new WebSocket(WS_URL);
+          ws.binaryType = 'arraybuffer';
+          ws.onopen = function () {
+              console.log("Openened connection to websocket");
+          }
+          ws.onclose = function (e) {
+              console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+              setTimeout(function () {
+                  connectWebSocket();
+              }, 5000);
+          };
+          ws.onerror = function (err) {
+              console.error('Socket encountered error: ', err.message, 'Closing socket');
+              ws.close();
+          };
+          ws.onmessage = function (e) {
+              console.log('Got WS MSG')
 
-            let url = window.URL.createObjectURL(
-                new Blob([e.data], {type: "image/jpeg"})
-            )
-            target.onload = function () {
-                window.URL.revokeObjectURL(url);
-            };
-            target.src = url;
-        };
-    }
+              let url = window.URL.createObjectURL(
+                  new Blob([e.data], {type: "image/jpeg"})
+              )
+              target.onload = function () {
+                  window.URL.revokeObjectURL(url);
+              };
+              target.src = url;
+          };
+      }
 
-    function dataURItoBlob(dataURI) {
-        // convert base64/URLEncoded data component to raw binary data held in a string
-        var byteString;
-        if (dataURI.split(',')[0].indexOf('base64') >= 0)
-            byteString = atob(dataURI.split(',')[1]);
-        else
-            byteString = unescape(dataURI.split(',')[1]);
+      function dataURItoBlob(dataURI) {
+          // convert base64/URLEncoded data component to raw binary data held in a string
+          var byteString;
+          if (dataURI.split(',')[0].indexOf('base64') >= 0)
+              byteString = atob(dataURI.split(',')[1]);
+          else
+              byteString = unescape(dataURI.split(',')[1]);
 
-        // separate out the mime component
-        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+          // separate out the mime component
+          var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
-        // write the bytes of the string to a typed array
-        var ia = new Uint8Array(byteString.length);
-        for (var i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-        }
+          // write the bytes of the string to a typed array
+          var ia = new Uint8Array(byteString.length);
+          for (var i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
+          }
 
-        return new Blob([ia], {type: mimeString});
-    }
-
-</script>
+          return new Blob([ia], {type: mimeString});
+      }
+  </script>
+</main>
 </body>
 </html>
