@@ -18,6 +18,7 @@ PORT = int(os.environ.get('PORT', 8088))
 SSL = strtobool(os.environ.get('SSL', 'True'))
 SSL_CRT_PATH = os.environ.get('SSL_CRT_PATH', 'certificate/sslcert.crt')
 SSL_KEY_PATH = os.environ.get('SSL_KEY_PATH', 'certificate/sslcert.key')
+REVERSE_PROXY_WS_URL = os.environ.get('REVERSE_PROXY_WS_URL', 'wss://0.0.0.0:8088/ws')
 JINJA2_TEMPLATES_DIR = 'templates'
 
 routes = web.RouteTableDef()
@@ -26,7 +27,9 @@ routes = web.RouteTableDef()
 @routes.get('/')
 @aiohttp_jinja2.template('index.html')
 async def index(request):
-    return {}
+    return {
+        "WS_URL": REVERSE_PROXY_WS_URL
+    }
 
 
 @routes.get('/ws')
