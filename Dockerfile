@@ -1,8 +1,11 @@
 # Start with an official Python image compatible with ARM64 architecture
-FROM jjanzic/docker-python3-opencv
+FROM rpiguru/docker-python3-opencv-arm
 
 # Set the working directory in the container
 WORKDIR /app
+
+# Upgrade pip and install wheel to avoid potential issues with package installations
+RUN pip install --upgrade pip setuptools wheel
 
 # Copy the requirements.txt file into the container
 COPY requirements.txt /app/
