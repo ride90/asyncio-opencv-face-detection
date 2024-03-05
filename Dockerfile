@@ -1,5 +1,5 @@
 # Start with an official Python image compatible with ARM64 architecture
-FROM arm64v8/python:3.8-slim
+FROM jjanzic/docker-python3-opencv
 
 # Set the working directory in the container
 WORKDIR /app
