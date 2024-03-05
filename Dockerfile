@@ -1,5 +1,5 @@
 # Start with an official Python image compatible with ARM64 architecture
-FROM rpiguru/docker-python3-opencv-arm
+FROM rpiguru/docker-python3-opencv-arm:aarch64-latest
 
 # Set the working directory in the container
 WORKDIR /app
