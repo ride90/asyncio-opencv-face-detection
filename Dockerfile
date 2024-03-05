@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
+RUN pip install --upgrade pip setuptools wheel
+RUN apt-get update && apt-get install -y build-essential libffi-dev
 
 # Pre-install numpy to avoid build issues, preferring binary wheels
 RUN pip install --prefer-binary numpy==1.19.2
