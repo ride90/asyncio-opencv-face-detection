@@ -7,6 +7,9 @@ RUN conda install mamba -n base -c conda-forge
 # Set the working directory in the container
 WORKDIR /app
 
+# Pre-install numpy to avoid the build error
+RUN mamba install numpy==1.19.2 || pip install numpy==1.19.2
+
 # Copy only the requirements file, to cache the dependencies installation
 COPY requirements.txt /app/
 
