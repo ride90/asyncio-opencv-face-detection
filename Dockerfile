@@ -1,26 +1,33 @@
-# Use a Miniconda base image
-FROM continuumio/miniconda3
+# This Dockerfile is designed to work on arm64.
 
-# Install Mamba from the Conda-Forge channel
-RUN conda install mamba -n base -c conda-forge
+# Start with a Python 3.8 slim image that supports arm64
+FROM python:3.8-slim
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Pre-install numpy to avoid the build error
-RUN mamba install numpy==1.19.2 || pip install numpy==1.19.2
+# Ensure system is updated and has basic build requirements
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libc-dev \
+    libffi-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy only the requirements file, to cache the dependencies installation
+# Pre-install numpy to avoid build issues, preferring binary wheels
+RUN pip install --prefer-binary numpy==1.19.2
+
+# Copy the requirements file first, to leverage Docker cache
 COPY requirements.txt /app/
 
-# Use Mamba to install the packages from requirements.txt
-RUN mamba install --yes --file requirements.txt || pip install --no-cache-dir -r requirements.txt
+# Install any additional requirements
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code to the container
 COPY . /app
 
-# Make port 8088 available to the world outside this container
+# Expose the port the app runs on
 EXPOSE 8088
 
-# Run main.py when the container launches
+# Command to run the application
 CMD ["python", "./main.py"]
