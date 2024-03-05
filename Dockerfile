@@ -1,36 +1,32 @@
-# This Dockerfile is designed to work on arm64.
-
-# Start with a Python 3.8 slim image that supports arm64
-FROM python:3.8-slim
-
-
-# Ensure system is updated and has basic build requirements
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    libc-dev \
-    libffi-dev \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
-RUN pip install --upgrade pip setuptools wheel
-RUN apt-get update && apt-get install -y build-essential libffi-dev
-
-# Pre-install numpy to avoid build issues, preferring binary wheels
-RUN pip install --prefer-binary numpy==1.19.2
+# Start with an official Python image compatible with ARM64 architecture
+FROM arm64v8/python:3.8-slim
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file first, to leverage Docker cache
+# Install dependencies required for OpenCV and other packages
+RUN apt-get update && apt-get install -y \
+    libjpeg-dev libpng-dev libtiff-dev \
+    libavcodec-dev libavformat-dev libswscale-dev \
+    libgtk2.0-dev \
+    libatlas-base-dev gfortran \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and install wheel to avoid potential issues with package installations
+RUN pip install --upgrade pip setuptools wheel
+
+# Copy the requirements.txt file into the container
 COPY requirements.txt /app/
 
-# Install any additional requirements
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies
+# Note: Adjustments might be needed if opencv-python still fails to install
+RUN pip install -r requirements.txt
 
-# Copy the rest of the application code to the container
+# Copy the rest of your application into the container
 COPY . /app
 
-# Expose the port the app runs on
-EXPOSE 8088
+# Expose the port your app runs on
+EXPOSE 8080
 
-# Command to run the application
+# Command to run your application
 CMD ["python", "./main.py"]
