@@ -2,5 +2,5 @@ aiohttp==3.6.2
 aiohttp-jinja2==1.2.0
 chardet==3.0.4
 imutils==0.5.3
-opencv-python-aarch64
+opencv-python-aarch64==3.3.0.1
 pyOpenSSL==19.1.0
