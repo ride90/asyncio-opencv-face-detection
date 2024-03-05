@@ -4,14 +4,6 @@ FROM jjanzic/docker-python3-opencv
 # Set the working directory in the container
 WORKDIR /app
 
-# Install dependencies required for OpenCV and other packages
-RUN apt-get update && apt-get install -y \
-    libjpeg-dev libpng-dev libtiff-dev \
-    libavcodec-dev libavformat-dev libswscale-dev \
-    libgtk2.0-dev \
-    libatlas-base-dev gfortran \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # Upgrade pip and install wheel to avoid potential issues with package installations
 RUN pip install --upgrade pip setuptools wheel
 
